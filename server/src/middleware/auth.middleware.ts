@@ -1,16 +1,10 @@
 import { Request, Response, NextFunction } from "express";
-import jwt from "jsonwebtoken";
+import jwt, { JwtPayload } from "jsonwebtoken";
 import User from "../models/User";
 
-interface JwtPayload {
-  id: string;
-}
-
+// Extend Express Request safely
 export interface AuthRequest extends Request {
   user?: any;
-  cookies: {
-    token?: string;
-  };
 }
 
 const protect = async (
@@ -28,13 +22,19 @@ const protect = async (
     const decoded = jwt.verify(
       token,
       process.env.JWT_SECRET as string
-    ) as JwtPayload;
+    ) as JwtPayload & { id: string };
 
-    req.user = await User.findById(decoded.id);
+    const user = await User.findById(decoded.id);
+
+    if (!user) {
+      return res.status(401).json({ message: "User not found" });
+    }
+
+    req.user = user;
     next();
-  } catch {
+  } catch (error) {
     return res.status(401).json({ message: "Invalid token" });
   }
 };
 
-export default protect; // 🔥 THIS LINE MUST EXIST
+export default protect;
