@@ -8,6 +8,9 @@ interface JwtPayload {
 
 export interface AuthRequest extends Request {
   user?: any;
+  cookies: {
+    token?: string;
+  };
 }
 
 const protect = async (
